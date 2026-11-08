@@ -29,7 +29,7 @@ Claude-Artifacts sind nicht mehr Master und werden für diese Apps nicht mehr ve
 - **Alle Apps teilen sich eine Origin** (`mktech-gh.github.io`) und damit denselben localStorage. Jede App verwendet einen eigenen Schlüssel mit App-Präfix, z. B. `<app-name>.v1`.
 - Speicherschlüssel nie umbenennen. Ändert sich das Datenformat, alte Daten beim Laden weiterhin lesen und umwandeln.
 - Apps, die Daten speichern, bieten Export und Import als JSON an (Datensicherung, Übertragung auf andere Geräte). Dateiname enthält den Titel und das Datum.
-- Zielgerät: Android-Handy mit Chrome, als „Zum Startbildschirm hinzufügen“ genutzt. Mobile first, helles und dunkles Farbschema. Edge kann auf dem Gerät keine Sprachausgabe.
+- Zielgerät: Android-Handy, Standardbrowser Edge (Chrome geht auch), als „Zum Startbildschirm hinzufügen“ genutzt. Mobile first, helles und dunkles Farbschema. Sprachausgabe funktioniert auf GitHub Pages in Edge und Chrome.
 - Sprache der Oberfläche: Deutsch in Schweizer Schreibweise (ss statt ß).
 - Texte ohne Gedankenstriche formulieren (Wunsch von Markus).
 - Bestätigungen (Löschen, Ersetzen) in der Seite selbst lösen, nicht mit `confirm()`.
