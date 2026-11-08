@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vorlage Sicherung</title>
+<!--
+  VORLAGE: Standard für Sicherung und Wiederherstellung (siehe CLAUDE.md, Abschnitt "Sicherung").
+  Keine App. Neue Apps kopieren die mit "SICHERUNG" markierten Teile (CSS, HTML, JS)
+  und passen nur den Block "APP-SPEZIFISCH" an.
+  Die Seite ist selbst lauffähig und dient als Testfall.
+-->
+<style>
+:root{--bg:#F1F4F6;--surface:#FFFFFF;--ink:#12171D;--muted:#5A6572;--line:#DCE2E8;--line-strong:#C3CCD5;--accent:#D2441B;--accent-soft:#FBE4DA;--on-accent:#FFFFFF;--focus:#2F6FD6;color-scheme:light}
+@media (prefers-color-scheme: dark){:root{--bg:#0E1216;--surface:#171D23;--ink:#ECF0F3;--muted:#98A3AF;--line:#28313A;--line-strong:#3A4550;--accent:#F2693F;--accent-soft:#3A1D13;--on-accent:#1A0904;--focus:#7FA8F0;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+main{max-width:560px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+.demo{display:flex;gap:8px;align-items:center}
+.demo input{flex:1;min-width:0;padding:10px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface)}
+
+/* ===== SICHERUNG: CSS ===== */
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h2{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.io{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px}
+.io button{flex:1 1 150px;min-height:48px;border-radius:12px;border:1px solid var(--line-strong);background:var(--bg);font-weight:600;padding:0 10px;cursor:pointer}
+.paste{border-top:1px solid var(--line)}
+.paste summary{padding:14px 16px;font-weight:600;cursor:pointer;color:var(--muted)}
+.paste-body{padding:0 16px 14px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{width:100%;min-height:100px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg);padding:10px;font-family:ui-monospace,"Roboto Mono",monospace;font-size:.78rem;resize:vertical}
+.paste-body button{align-self:flex-start;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line-strong);background:var(--bg);font-weight:600;cursor:pointer}
+.imp-confirm{border-top:1px solid var(--line);background:var(--accent-soft);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.imp-confirm p{margin:0}
+.imp-confirm .btns{display:flex;gap:8px;flex-wrap:wrap}
+.imp-confirm button{min-height:46px;padding:0 18px;border-radius:12px;font-weight:600;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer}
+.imp-confirm .yes{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:80;max-width:min(92vw,480px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:.92rem}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* ===== /SICHERUNG ===== */
+</style>
+</head>
+<body>
+<main>
+  <h1>Vorlage Sicherung</h1>
+  <p class="hint">Testseite für den Standard. Ändere den Text, exportiere, ändere ihn wieder und importiere.</p>
+  <div class="demo"><input id="demo-text" aria-label="Beispielwert"></div>
+
+  <!-- ===== SICHERUNG: HTML ===== -->
+  <section class="sec" aria-labelledby="bk-title">
+    <h2 id="bk-title">Sicherung</h2>
+    <div class="panel">
+      <div class="io">
+        <button type="button" id="bk-file">Als .json-Datei speichern</button>
+        <button type="button" id="bk-copy">Als Text kopieren</button>
+        <button type="button" id="bk-open">Datei importieren</button>
+      </div>
+      <details class="paste" id="bk-paste">
+        <summary>Text einfügen und importieren</summary>
+        <div class="paste-body">
+          <textarea id="bk-text" placeholder="Gesicherten Text hier einfügen" aria-label="Gesicherter Text"></textarea>
+          <button type="button" id="bk-go">Text importieren</button>
+        </div>
+      </details>
+      <div class="imp-confirm" id="bk-confirm" hidden>
+        <p id="bk-msg"></p>
+        <div class="btns"><button type="button" class="yes" id="bk-yes">Ersetzen</button><button type="button" id="bk-no">Abbrechen</button></div>
+      </div>
+    </div>
+    <p class="hint">Die Sicherung enthält alle Einstellungen dieser App. Die Datei kannst du aufbewahren, per Mail oder Messenger weitergeben und auf einem anderen Gerät importieren.</p>
+  </section>
+  <input type="file" id="bk-input" accept=".json,application/json,text/plain" hidden>
+  <div class="toast" id="toast" hidden></div>
+  <!-- ===== /SICHERUNG ===== -->
+</main>
+
+<script>
+(function(){
+/* ===== APP-SPEZIFISCH: nur diesen Block pro App anpassen ===== */
+const APP_ID='vorlage';          // = Ordnername der App
+const FORMAT_VERSION=1;          // erhöhen, wenn sich das Datenformat ändert; migrate() nachführen
+const STORE_KEY='vorlage.v1';    // eigener localStorage-Schlüssel mit App-Präfix
+let state=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(d)return d}catch(e){}return {title:'Vorlage',text:'Beispieltext'}}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(state))}catch(e){toast('Speichern hat nicht geklappt, der Speicher ist voll.')}}
+function render(){document.getElementById('demo-text').value=state.text}
+document.getElementById('demo-text').addEventListener('input',e=>{state.text=e.target.value;save()});
+const backup={
+  title:()=>state.title||'Vorlage',                // fliesst in den Dateinamen ein
+  data:()=>state,                                   // was gesichert wird
+  migrate:(data,version)=>data,                     // ältere Formatversionen umwandeln
+  validate:data=>{                                  // prüfen und bereinigen, bei Fehler throw
+    if(!data||typeof data.text!=='string')throw new Error('Kein Text enthalten.');
+    return {title:typeof data.title==='string'?data.title.slice(0,40):'',text:data.text.slice(0,5000)};
+  },
+  summary:data=>'Text mit '+data.text.length+' Zeichen.',  // für die Rückfrage
+  apply:data=>{state=data;save();render()}
+};
+/* ===== /APP-SPEZIFISCH ===== */
+
+/* ===== SICHERUNG: JS (unverändert übernehmen) ===== */
+const $=id=>document.getElementById(id);
+let toastT=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+function bkSlug(t){
+  let s=String(t||'').trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return s||APP_ID;
+}
+function bkDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function bkFileName(){return bkSlug(backup.title())+'-'+bkDate()+'.json'}
+function bkText(){return JSON.stringify({app:APP_ID,version:FORMAT_VERSION,exported:new Date().toISOString(),title:backup.title(),data:backup.data()},null,1)}
+function bkParse(text){
+  let o;try{o=JSON.parse(text)}catch(e){throw new Error('Das ist kein gültiger Sicherungstext. Prüfe, ob er vollständig kopiert wurde.')}
+  if(!o||typeof o!=='object'||!('data' in o))throw new Error('Das ist keine Sicherung dieser App.');
+  if(o.app!==APP_ID)throw new Error('Diese Sicherung gehört zu einer anderen App ('+String(o.app||'unbekannt')+').');
+  const v=parseInt(o.version,10)||1;
+  if(v>FORMAT_VERSION)throw new Error('Diese Sicherung stammt aus einer neueren Version der App. Lade die App neu und versuche es nochmals.');
+  return backup.validate(backup.migrate(o.data,v));
+}
+let bkPending=null;
+function bkOffer(text){
+  try{bkPending=bkParse(text)}catch(e){bkPending=null;$('bk-confirm').hidden=true;toast(e.message);return}
+  $('bk-msg').textContent='Gefunden: '+backup.summary(bkPending)+' Das ersetzt die aktuellen Einstellungen.';
+  $('bk-confirm').hidden=false;$('bk-yes').focus();
+}
+$('bk-file').addEventListener('click',()=>{
+  try{
+    const url=URL.createObjectURL(new Blob([bkText()],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=bkFileName();a.hidden=true;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),15000);
+    toast('Sicherung als Datei gespeichert ('+bkFileName()+').');
+  }catch(e){toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
+});
+$('bk-copy').addEventListener('click',()=>{
+  const txt=bkText();
+  const fallback=()=>{$('bk-paste').open=true;const t=$('bk-text');t.value=txt;t.focus();t.select();toast('Text ist markiert. Kopiere ihn über das Menü deines Handys.')};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Sicherung als Text kopiert.'),fallback)}catch(e){fallback()}
+});
+$('bk-open').addEventListener('click',()=>{$('bk-input').value='';$('bk-input').click()});
+$('bk-input').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>bkOffer(String(r.result||''));r.onerror=()=>toast('Die Datei konnte nicht gelesen werden.');r.readAsText(f);
+});
+$('bk-go').addEventListener('click',()=>{const t=$('bk-text').value.trim();if(!t){toast('Bitte zuerst den gesicherten Text einfügen.');return}bkOffer(t)});
+$('bk-no').addEventListener('click',()=>{bkPending=null;$('bk-confirm').hidden=true});
+$('bk-yes').addEventListener('click',()=>{
+  if(!bkPending)return;
+  const d=bkPending;bkPending=null;backup.apply(d);
+  $('bk-confirm').hidden=true;$('bk-text').value='';$('bk-paste').open=false;
+  toast('Sicherung wiederhergestellt.');
+});
+/* ===== /SICHERUNG ===== */
+
+render();
+})();
+</script>
+</body>
+</html>

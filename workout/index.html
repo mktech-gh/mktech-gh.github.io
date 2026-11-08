@@ -262,7 +262,7 @@ button{cursor:pointer}
   </section>
 
   <section class="sec">
-    <h2>Import und Export</h2>
+    <h2>Sicherung</h2>
     <div class="panel">
       <div class="io">
         <button type="button" id="exp-file">Als .json-Datei speichern</button>
@@ -529,7 +529,7 @@ function fileName(){
   const t=(state.title||'').trim()||'Mein Workout';
   let s=t.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   if(!s)s='workout';
-  return s+'-'+new Date().toISOString().slice(0,10)+'.json';
+  return s+'-'+(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date())+'.json';
 }
 function exportText(){
   return JSON.stringify({app:'mein-workout',version:1,exported:new Date().toISOString(),workout:{
