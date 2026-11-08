@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1216">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Mein Workout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: eine Spalte wie eine Handy-App. Übersicht + Einstellungen, darüber ein Vollbild-Lauf mit Bild, Countdown und Balken. */
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --ink:#12171D; --muted:#5A6572; --line:#DCE2E8; --line-strong:#C3CCD5;
+  --work:#D2441B; --work-soft:#FBE4DA; --on-work:#FFFFFF;
+  --rest:#1C8277; --rest-soft:#D5EEEA; --on-rest:#FFFFFF;
+  --focus:#2F6FD6;
+  --f-display:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow","Roboto",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1216; --surface:#171D23; --ink:#ECF0F3; --muted:#98A3AF; --line:#28313A; --line-strong:#3A4550;
+    --work:#F2693F; --work-soft:#3A1D13; --on-work:#1A0904;
+    --rest:#3BB8A8; --rest-soft:#10302B; --on-rest:#04150F;
+    --focus:#7FA8F0; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1216; --surface:#171D23; --ink:#ECF0F3; --muted:#98A3AF; --line:#28313A; --line-strong:#3A4550;
+  --work:#F2693F; --work-soft:#3A1D13; --on-work:#1A0904;
+  --rest:#3BB8A8; --rest-soft:#10302B; --on-rest:#04150F;
+  --focus:#7FA8F0; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;display:flex;flex-direction:column;gap:22px}
+
+.app-head h1{font-family:var(--f-display);font-weight:700;font-size:2.6rem;line-height:1;margin:0;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.app-head p{margin:6px 0 0;color:var(--muted)}
+.title-row{display:flex;align-items:center;gap:8px}
+.title-in{flex:1;min-width:0;font:inherit;text-transform:inherit;letter-spacing:inherit;color:inherit;background:transparent;border:0;border-bottom:2px dashed var(--line-strong);border-radius:0;padding:0 0 2px}
+.title-in::placeholder{color:var(--muted)}
+.title-in:focus{outline:none;border-bottom:2px solid var(--focus)}
+.pen{font-size:1.5rem;color:var(--muted);flex-shrink:0}
+
+.start-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.stat b{font-family:var(--f-display);font-weight:700;font-size:clamp(2.8rem,13vw,3.8rem);line-height:1;font-variant-numeric:tabular-nums}
+.stat b small{font-size:.38em;font-weight:600;color:var(--muted);margin-left:4px}
+
+.btn-start{border:0;border-radius:16px;min-height:64px;background:var(--work);color:var(--on-work);font-family:var(--f-display);font-weight:700;font-size:1.6rem;text-transform:uppercase;letter-spacing:.04em}
+.btn-start:disabled{opacity:.45;cursor:not-allowed}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h2{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px}
+.row + .row{border-top:1px solid var(--line)}
+.row-label{display:flex;flex-direction:column;min-width:0}
+.row-label label{font-weight:600}
+.row-label small{color:var(--muted);font-size:.85rem}
+.stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stepper button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line-strong);background:var(--bg);font-size:1.4rem;line-height:1}
+.stepper .num{display:flex;align-items:baseline;gap:2px}
+.stepper input{width:3.2ch;border:0;background:transparent;text-align:center;font-family:var(--f-display);font-weight:700;font-size:1.7rem;font-variant-numeric:tabular-nums;-moz-appearance:textfield;padding:0}
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.stepper .unit{color:var(--muted);font-weight:600;width:1ch}
+
+.switch{display:flex;align-items:center;gap:12px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--work)}
+
+.sets{list-style:none;margin:0;padding:0}
+.set{display:flex;gap:12px;padding:12px;align-items:center}
+.set + .set{border-top:1px solid var(--line)}
+.thumb{position:relative;flex-shrink:0;width:84px;height:84px;border-radius:14px;border:1px solid var(--line);background:var(--work-soft);color:var(--ink);padding:4px;display:grid;place-items:center;overflow:hidden}
+.thumb.rest{background:var(--rest-soft)}
+.thumb svg,.thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.thumb img{border-radius:10px}
+.thumb-tag{position:absolute;left:4px;right:4px;bottom:4px;background:var(--surface);color:var(--ink);border-radius:6px;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:1px 0;opacity:.92}
+.set-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.set-head{display:flex;align-items:center;gap:8px;min-width:0}
+.set-no{font-family:var(--f-display);font-weight:700;color:var(--work);font-size:1.1rem;flex-shrink:0;font-variant-numeric:tabular-nums}
+.set-name{flex:1;min-width:0;border:1px solid transparent;border-bottom-color:var(--line-strong);background:transparent;padding:4px 2px;font-weight:600;font-size:1.05rem;border-radius:4px}
+.set-name:focus{border-color:var(--focus);outline:none}
+.set-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pic-select{min-width:0;max-width:150px;height:36px;border:1px solid var(--line-strong);border-radius:10px;background:var(--bg);padding:0 6px;font-size:.88rem}
+.tool{height:36px;min-width:36px;padding:0 10px;border:1px solid var(--line-strong);border-radius:10px;background:var(--bg);font-size:.88rem;font-weight:500}
+.tool:disabled{opacity:.35;cursor:default}
+.tool.danger{color:var(--work)}
+.tool.confirm{background:var(--work);border-color:var(--work);color:var(--on-work)}
+.add-set{width:100%;border:0;border-top:1px solid var(--line);background:transparent;padding:14px;font-weight:600;color:var(--work)}
+.empty{padding:20px 16px;color:var(--muted);margin:0}
+
+.prep{width:100%;min-height:130px;resize:vertical;border:0;background:transparent;padding:14px 16px;line-height:1.5;display:block}
+.prep:focus{outline:none}
+.panel:has(.prep:focus-visible),.panel:has(.prep:focus){outline:3px solid var(--focus);outline-offset:2px}
+.io{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px}
+.io button{flex:1 1 150px;min-height:48px;border-radius:12px;border:1px solid var(--line-strong);background:var(--bg);font-weight:600;padding:0 10px}
+.paste{border-top:1px solid var(--line)}
+.paste summary{padding:14px 16px;font-weight:600;cursor:pointer;color:var(--muted)}
+.paste-body{padding:0 16px 14px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{width:100%;min-height:100px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg);padding:10px;font-family:ui-monospace,"Roboto Mono",monospace;font-size:.78rem;resize:vertical}
+.paste-body button{align-self:flex-start;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line-strong);background:var(--bg);font-weight:600}
+.imp-confirm{border-top:1px solid var(--line);background:var(--work-soft);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.imp-confirm p{margin:0}
+.imp-confirm .btns{display:flex;gap:8px;flex-wrap:wrap}
+.imp-confirm button{min-height:46px;padding:0 18px;border-radius:12px;font-weight:600;border:1px solid var(--line-strong);background:var(--surface)}
+.imp-confirm .yes{background:var(--work);border-color:var(--work);color:var(--on-work)}
+.prep-img{display:block;width:100%;border:0;padding:0;background:var(--bg);cursor:pointer}
+.prep-img img{display:block;width:100%;max-height:60vh;object-fit:contain}
+.prep-pad{padding:12px}
+.prep-empty{width:100%;min-height:150px;border:2px dashed var(--line-strong);border-radius:14px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);padding:16px;text-align:center}
+.prep-empty b{font-size:1.15rem;color:var(--work)}
+.io .danger{color:var(--work)}
+.io .confirm{background:var(--work);border-color:var(--work);color:var(--on-work)}
+.tts-status{flex:1;min-width:0;color:var(--muted);font-size:.88rem}
+.foot{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.link-btn{border:0;background:none;padding:6px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.link-btn.confirm{color:var(--work);font-weight:600}
+
+/* ---------- Lauf ---------- */
+.run{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;--ph:var(--work);--ph-soft:var(--work-soft);--on-ph:var(--on-work)}
+.run[data-phase="pause"],.run[data-phase="ready"]{--ph:var(--rest);--ph-soft:var(--rest-soft);--on-ph:var(--on-rest)}
+.run-inner{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:12px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.total{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.total i{display:block;height:100%;background:var(--muted);transform-origin:left;transform:scaleX(0)}
+.run-top{display:flex;align-items:center;gap:10px}
+.chip{background:var(--ph);color:var(--on-ph);font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:1.05rem;padding:3px 12px;border-radius:999px}
+.run-pos{flex:1;min-width:0;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mute{height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);font-size:.85rem;font-weight:600}
+.mute[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}
+.stage{flex:1 0 auto;min-height:max(180px,min(44vh,400px));border-radius:24px;background:var(--ph-soft);color:var(--ink);padding:14px;overflow:hidden}
+.stage>img,.stage>svg{position:absolute;top:14px;left:14px;width:calc(100% - 28px)!important;height:calc(100% - 28px)!important;object-fit:contain}
+.stage svg,.stage img{width:100%;height:100%;object-fit:contain;display:block}
+.stage img{border-radius:14px}
+.stage{position:relative}
+.stage .tag-next{position:absolute;top:12px;left:12px;background:var(--rest);color:var(--on-rest);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;padding:4px 10px;border-radius:999px}
+.stage .corner{position:absolute;right:12px;bottom:12px;width:26%;max-width:110px;aspect-ratio:1;border-radius:14px;background:var(--surface);border:2px solid var(--rest);overflow:hidden}
+.stage .corner svg,.stage .corner img{position:absolute;top:4px;left:4px;width:calc(100% - 8px)!important;height:calc(100% - 8px)!important;object-fit:contain}
+.r-name{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(1.9rem,8vw,2.6rem);line-height:1.02;text-transform:uppercase;text-wrap:balance}
+.clock-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.clock{font-family:var(--f-display);font-weight:700;color:var(--ph);font-size:clamp(4.6rem,24vw,7.6rem);line-height:.82;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.clock small{font-size:.32em;margin-left:4px;color:var(--muted)}
+.left{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;text-align:right;padding-bottom:6px}
+.bar{height:22px;border-radius:11px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ph);transform-origin:left;transform:scaleX(1);border-radius:11px}
+.r-next{display:flex;align-items:center;gap:10px;min-height:52px;color:var(--muted);font-weight:500}
+.r-next .mini{width:52px;height:52px;flex-shrink:0;border-radius:12px;background:var(--work-soft);color:var(--ink);padding:3px;display:grid;place-items:center;overflow:hidden}
+.r-next .mini svg,.r-next .mini img{width:100%;height:100%;object-fit:contain}
+.r-next b{color:var(--ink)}
+.controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px;margin-top:auto}
+.ctl{min-height:62px;border-radius:16px;border:1px solid var(--line-strong);background:var(--surface);font-weight:600;font-size:1rem;padding:0 6px}
+.ctl.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-family:var(--f-display);font-size:1.45rem;text-transform:uppercase;letter-spacing:.04em}
+.ctl.confirm{background:var(--work);border-color:var(--work);color:var(--on-work)}
+.run.paused .clock,.run.paused .bar i{opacity:.45}
+
+.check-text{margin:0;color:var(--muted);font-size:1.05rem}
+.check-img{position:relative;flex:1 0 auto;min-height:240px}
+.check-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:12px}
+.check-btns{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:auto}
+.done{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:left}
+.done h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:3.6rem;line-height:1;text-transform:uppercase;color:var(--rest)}
+.done p{margin:0;font-size:1.1rem}
+.done .row-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.done .row-btns button{flex:1 1 160px;min-height:58px;border-radius:16px;font-weight:600}
+.done .again{border:0;background:var(--work);color:var(--on-work);font-family:var(--f-display);font-size:1.4rem;text-transform:uppercase}
+.done .back{border:1px solid var(--line-strong);background:var(--surface)}
+
+.picto .fig{fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.picto .fig circle{fill:currentColor;stroke:none}
+.picto .floor{stroke:var(--line-strong);stroke-width:5;stroke-linecap:round}
+.picto .breath{stroke:var(--rest);stroke-width:5}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:80;max-width:min(92vw,480px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:.92rem;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+</style>
+
+</head>
+<body>
+<div class="wrap" id="home">
+  <header class="app-head">
+    <h1 class="title-row"><input id="in-title" class="title-in" maxlength="40" placeholder="Mein Workout" aria-label="Titel des Workouts" autocomplete="off"><span class="pen" aria-hidden="true">✎</span></h1>
+    <p id="sub">Gesamtdauer 17:40 Min.</p>
+  </header>
+
+  <section class="start-card" aria-label="Workout starten">
+    <div class="stats">
+      <div class="stat"><span>Gesamtdauer</span><b id="st-total">0:00<small>Min.</small></b></div>
+      <div class="stat"><span>Sets insgesamt</span><b id="st-count">0</b></div>
+    </div>
+    <button class="btn-start" id="btn-start">Workout starten</button>
+    <p class="hint">Vor dem ersten Set zählt die App 5 Sekunden herunter. Der Bildschirm bleibt während des Trainings an, soweit das Handy es erlaubt.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Ablauf</h2>
+    <div class="panel">
+      <div class="row">
+        <div class="row-label"><label for="in-rounds">Durchläufe (x)</label><small>Wie oft alle Sets nacheinander laufen</small></div>
+        <div class="stepper"><button type="button" data-step="rounds" data-d="-1" aria-label="Ein Durchlauf weniger">−</button><span class="num"><input id="in-rounds" type="number" inputmode="numeric" min="1" max="50"><span class="unit"></span></span><button type="button" data-step="rounds" data-d="1" aria-label="Ein Durchlauf mehr">+</button></div>
+      </div>
+      <div class="row">
+        <div class="row-label"><label for="in-sets">Anzahl Sets (n)</label><small>Übungen pro Durchlauf. Weniger blendet die letzten Sets aus, mehr holt sie zurück.</small></div>
+        <div class="stepper"><button type="button" data-count="-1" aria-label="Ein Set weniger">−</button><span class="num"><input id="in-sets" type="number" inputmode="numeric" min="1" max="30"><span class="unit"></span></span><button type="button" data-count="1" aria-label="Ein Set mehr">+</button></div>
+      </div>
+      <div class="row">
+        <div class="row-label"><label for="in-work">Set-Dauer (ts)</label><small>Sekunden pro Set</small></div>
+        <div class="stepper"><button type="button" data-step="work" data-d="-5" aria-label="5 Sekunden weniger">−</button><span class="num"><input id="in-work" type="number" inputmode="numeric" min="5" max="900"><span class="unit">s</span></span><button type="button" data-step="work" data-d="5" aria-label="5 Sekunden mehr">+</button></div>
+      </div>
+      <div class="row">
+        <div class="row-label"><label for="in-rest">Pause (tp)</label><small>Sekunden zwischen zwei Sets innerhalb eines Durchlaufs, 0 = keine Pause</small></div>
+        <div class="stepper"><button type="button" data-step="rest" data-d="-5" aria-label="5 Sekunden weniger">−</button><span class="num"><input id="in-rest" type="number" inputmode="numeric" min="0" max="900"><span class="unit">s</span></span><button type="button" data-step="rest" data-d="5" aria-label="5 Sekunden mehr">+</button></div>
+      </div>
+      <div class="row">
+        <div class="row-label"><label for="in-rrest">Pause zwischen Durchläufen (tr)</label><small>Sekunden nach dem letzten Set eines Durchlaufs, 0 = keine Pause</small></div>
+        <div class="stepper"><button type="button" data-step="roundRest" data-d="-15" aria-label="15 Sekunden weniger">−</button><span class="num"><input id="in-rrest" type="number" inputmode="numeric" min="0" max="1800"><span class="unit">s</span></span><button type="button" data-step="roundRest" data-d="15" aria-label="15 Sekunden mehr">+</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Gerätevorbereitung</h2>
+    <div class="panel" id="prep-box"></div>
+  </section>
+
+  <section class="sec">
+    <h2 id="sets-title">Sets (n = 6)</h2>
+    <div class="panel">
+      <ul class="sets" id="sets"></ul>
+      <button type="button" class="add-set" id="add-set">+ Set hinzufügen</button>
+    </div>
+    <p class="hint">Tippe auf das Bild, um ein eigenes Foto oder GIF vom Handy zu wählen. Alternativ ein Symbol aus der Liste nehmen.</p>
+  </section>
+
+  <section class="sec">
+    <h2>Pausenbild</h2>
+    <div class="panel">
+      <div class="set" id="rest-row"></div>
+      <div class="row" style="border-top:1px solid var(--line)"><label class="switch" for="in-nextpic"><input type="checkbox" id="in-nextpic">In der Pause das Bild der nächsten Übung gross zeigen, Pausenbild klein in der Ecke</label></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Signale</h2>
+    <div class="panel">
+      <div class="row"><label class="switch" for="in-beep"><input type="checkbox" id="in-beep">Signaltöne bei 3, 2, 1 und beim Wechsel</label></div>
+      <div class="row"><label class="switch" for="in-speak"><input type="checkbox" id="in-speak">Übung ansagen (Sprachausgabe)</label></div>
+      <div class="row"><button type="button" class="tool" id="tts-test">Ansage testen</button><span class="tts-status" id="tts-status" aria-live="polite"></span></div>
+      <div class="row"><label class="switch" for="in-vib"><input type="checkbox" id="in-vib">Vibrieren beim Wechsel</label></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Import und Export</h2>
+    <div class="panel">
+      <div class="io">
+        <button type="button" id="exp-file">Als .json-Datei speichern</button>
+        <button type="button" id="exp-copy">Als Text kopieren</button>
+        <button type="button" id="imp-file-btn">Datei importieren</button>
+      </div>
+      <details class="paste" id="paste">
+        <summary>Text einfügen und importieren</summary>
+        <div class="paste-body">
+          <textarea id="imp-text" placeholder="Exportierten Workout-Text hier einfügen" aria-label="Workout-Text"></textarea>
+          <button type="button" id="imp-go">Text importieren</button>
+        </div>
+      </details>
+      <div class="imp-confirm" id="imp-confirm" hidden>
+        <p id="imp-msg"></p>
+        <div class="btns"><button type="button" class="yes" id="imp-yes">Ersetzen</button><button type="button" id="imp-no">Abbrechen</button></div>
+      </div>
+    </div>
+    <p class="hint">Der Export enthält Ablauf, das Bild der Gerätevorbereitung, alle Sets und eigene Bilder. Die Datei kannst du z. B. per Mail oder Messenger weitergeben und auf einem anderen Gerät importieren.</p>
+  </section>
+
+  <div class="foot">
+    <button type="button" class="link-btn" id="reset">Beispiel-Workout wiederherstellen</button>
+  </div>
+</div>
+
+<input type="file" id="file" accept="image/*" hidden>
+<input type="file" id="imp-file" accept=".json,application/json,text/plain" hidden>
+
+<section class="run" id="run" hidden data-phase="ready" aria-live="polite">
+  <div class="run-inner" id="run-main">
+    <div class="total" aria-hidden="true"><i id="r-total"></i></div>
+    <div class="run-top">
+      <span class="chip" id="r-chip">Bereit</span>
+      <span class="run-pos" id="r-pos"></span>
+      <button type="button" class="mute" id="r-mute" aria-pressed="true">Ton</button>
+    </div>
+    <div class="stage" id="r-stage"></div>
+    <h2 class="r-name" id="r-name"></h2>
+    <div class="clock-row">
+      <div class="clock" aria-label="Verbleibende Sekunden"><span id="r-sec">0</span><small>s</small></div>
+      <div class="left" id="r-left"></div>
+    </div>
+    <div class="bar" role="progressbar" aria-label="Restzeit" aria-valuemin="0" id="r-bar"><i id="r-fill"></i></div>
+    <div class="r-next" id="r-next"></div>
+    <div class="controls">
+      <button type="button" class="ctl" id="r-stop">Beenden</button>
+      <button type="button" class="ctl primary" id="r-toggle">Anhalten</button>
+      <button type="button" class="ctl" id="r-skip">Weiter ›</button>
+    </div>
+  </div>
+  <div class="run-inner" id="run-check" hidden>
+    <div class="run-top"><span class="chip">Vorbereitung</span></div>
+    <h2 class="r-name">Geräte bereit?</h2>
+    <p class="check-text">Prüfe anhand des Bildes, ob alles bereitliegt. Wenn ja, bestätige mit „Alles bereit“.</p>
+    <div class="check-img" id="chk-img"></div>
+    <div class="check-btns">
+      <button type="button" class="ctl" id="chk-back">Zurück</button>
+      <button type="button" class="ctl primary" id="chk-ok">Alles bereit</button>
+    </div>
+  </div>
+  <div class="run-inner" id="run-done" hidden>
+    <div class="done">
+      <h2>Geschafft!</h2>
+      <p id="done-text"></p>
+      <div class="row-btns">
+        <button type="button" class="again" id="d-again">Nochmal</button>
+        <button type="button" class="back" id="d-back">Zur Übersicht</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const KEY='mein-workout.v1';
+const PICTOS={
+  jj:{label:'Hampelmann',svg:'<circle cx="100" cy="36" r="14"/><path d="M100 54 L100 110 M100 66 L62 30 M100 66 L138 30 M100 110 L68 170 M100 110 L132 170"/>'},
+  squat:{label:'Kniebeuge',svg:'<circle cx="114" cy="54" r="14"/><path d="M108 70 L92 118 L136 122 L130 170 L150 170 M104 82 L158 86"/>'},
+  pushup:{label:'Liegestütz',svg:'<circle cx="40" cy="100" r="13"/><path d="M58 108 L174 168 M64 111 L64 170"/>'},
+  plank:{label:'Unterarmstütz',svg:'<circle cx="40" cy="128" r="13"/><path d="M58 136 L174 170 M62 138 L62 168 L98 168"/>'},
+  lunge:{label:'Ausfallschritt',svg:'<circle cx="100" cy="34" r="14"/><path d="M100 52 L100 108 L140 124 L140 170 L156 170 M100 108 L72 158 L44 168 M100 66 L88 100 M100 66 L112 100"/>'},
+  climber:{label:'Mountain Climber',svg:'<circle cx="40" cy="90" r="13"/><path d="M56 100 L118 128 L176 170 M60 102 L60 170 M118 128 L84 138 L104 162"/>'},
+  rest:{label:'Pause',svg:'<circle cx="78" cy="68" r="14"/><path d="M80 86 L86 166 L130 128 L152 170 M82 100 L126 124"/><path class="breath" d="M102 46 q8 -7 16 0 q8 7 16 0 M110 30 q8 -7 16 0 q8 7 16 0"/>'}
+};
+const uid=()=>'s'+Math.random().toString(36).slice(2,9);
+const DEFAULT={title:'Mein Workout',rounds:3,work:40,rest:20,roundRest:60,prepImg:'',restImg:'builtin:rest',spare:[],prep:'Matte auslegen, Wasserflasche bereitstellen.',
+  prefs:{beep:true,speak:true,vib:true,nextPic:true},
+  sets:[
+    {name:'Hampelmann',img:'builtin:jj'},{name:'Kniebeugen',img:'builtin:squat'},
+    {name:'Liegestütze',img:'builtin:pushup'},{name:'Unterarmstütz',img:'builtin:plank'},
+    {name:'Ausfallschritte',img:'builtin:lunge'},{name:'Mountain Climbers',img:'builtin:climber'}
+  ]};
+function fresh(){const d=JSON.parse(JSON.stringify(DEFAULT));d.sets.forEach(s=>s.id=uid());return d}
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.sets)){const f=fresh();const m=Object.assign(f,d);m.prefs=Object.assign({},DEFAULT.prefs,d.prefs||{});m.sets.forEach(s=>{if(!s.id)s.id=uid()});return m}}}catch(e){}
+  return fresh();
+}
+let state=load();
+let saveT=0;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('Speichern hat nicht geklappt, der Speicher ist voll. Verwende kleinere Bilder oder Symbole.')}},250)}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function picto(k){return '<svg viewBox="0 0 200 200" class="picto" aria-hidden="true"><line class="floor" x1="22" y1="180" x2="178" y2="180"/><g class="fig">'+PICTOS[k].svg+'</g></svg>'}
+function imgHTML(src,alt){
+  if(src&&src.startsWith('builtin:')){const k=src.slice(8);return PICTOS[k]?picto(k):picto('jj')}
+  if(src)return '<img src="'+esc(src)+'" alt="'+esc(alt||'')+'">';
+  return picto('jj');
+}
+const setName=(s,i)=>(s.name||'').trim()||('Set '+(i+1));
+function totalSeconds(){const n=state.sets.length,x=state.rounds;if(!n)return 0;return x*n*state.work+x*(n-1)*state.rest+(x-1)*state.roundRest}
+
+let toastT=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+
+/* ---------- Übersicht ---------- */
+function renderSummary(){
+  const n=state.sets.length;
+  $('st-total').innerHTML=fmt(totalSeconds())+'<small>Min.</small>';
+  $('st-count').textContent=state.rounds*n;
+  $('sub').textContent='Noch keine Sets angelegt';$('sub').hidden=!!n;
+  $('sets-title').textContent='Sets (n = '+n+')';
+  $('btn-start').disabled=!n;
+  $('in-rounds').value=state.rounds;$('in-sets').value=n;$('in-rrest').value=state.roundRest;$('in-work').value=state.work;$('in-rest').value=state.rest;
+  $('in-beep').checked=state.prefs.beep;$('in-speak').checked=state.prefs.speak;$('in-vib').checked=state.prefs.vib;$('in-nextpic').checked=state.prefs.nextPic;
+}
+function pictoOptions(img){
+  const custom=img&&!img.startsWith('builtin:');
+  let o=custom?'<option value="custom" selected>Eigenes Bild</option>':'';
+  for(const k in PICTOS){o+='<option value="'+k+'"'+(!custom&&img==='builtin:'+k?' selected':'')+'>Symbol: '+PICTOS[k].label+'</option>'}
+  return o;
+}
+function renderSets(){
+  const ul=$('sets');ul.innerHTML='';
+  if(!state.sets.length){ul.innerHTML='<li class="empty">Noch keine Sets. Füge unten das erste Set hinzu.</li>';return}
+  state.sets.forEach((s,i)=>{
+    const li=document.createElement('li');li.className='set';
+    li.innerHTML=
+      '<button type="button" class="thumb" data-act="img" data-id="'+s.id+'" aria-label="Bild für '+esc(setName(s,i))+' wählen">'+imgHTML(s.img,setName(s,i))+'<span class="thumb-tag">Bild</span></button>'+
+      '<div class="set-main">'+
+        '<div class="set-head"><span class="set-no">'+(i+1)+'</span><input id="name-'+s.id+'" class="set-name" data-id="'+s.id+'" value="'+esc(s.name||'')+'" placeholder="Name der Übung" aria-label="Name von Set '+(i+1)+'"></div>'+
+        '<div class="set-tools">'+
+          '<select id="pic-'+s.id+'" class="pic-select" data-id="'+s.id+'" aria-label="Symbol für Set '+(i+1)+'">'+pictoOptions(s.img)+'</select>'+
+          '<button type="button" class="tool" data-act="up" data-id="'+s.id+'" aria-label="Nach oben"'+(i===0?' disabled':'')+'>↑</button>'+
+          '<button type="button" class="tool" data-act="down" data-id="'+s.id+'" aria-label="Nach unten"'+(i===state.sets.length-1?' disabled':'')+'>↓</button>'+
+          '<button type="button" class="tool danger" data-act="del" data-id="'+s.id+'">Entfernen</button>'+
+        '</div>'+
+      '</div>';
+    ul.appendChild(li);
+  });
+}
+function renderRest(){
+  $('rest-row').innerHTML=
+    '<button type="button" class="thumb rest" data-act="img" data-id="rest" aria-label="Pausenbild wählen">'+imgHTML(state.restImg,'Pause')+'<span class="thumb-tag">Bild</span></button>'+
+    '<div class="set-main"><div class="set-head"><span style="font-weight:600">Wird in jeder Pause angezeigt</span></div>'+
+    '<div class="set-tools"><select id="pic-rest" class="pic-select" data-id="rest" aria-label="Symbol für die Pause">'+pictoOptions(state.restImg)+'</select></div></div>';
+}
+function renderPrep(){
+  const box=$('prep-box');
+  if(state.prepImg){
+    box.innerHTML='<button type="button" class="prep-img" data-act="prep-pick" aria-label="Bild der Gerätevorbereitung ändern"><img src="'+esc(state.prepImg)+'" alt="Gerätevorbereitung"></button>'+
+      '<div class="io"><button type="button" data-act="prep-pick">Bild ändern</button><button type="button" class="danger" data-act="prep-del">Bild entfernen</button></div>';
+  }else{
+    box.innerHTML='<div class="prep-pad"><button type="button" class="prep-empty" data-act="prep-pick"><b>+ Bild hinzufügen</b><span>Foto der Geräte, zum Beispiel Matte, Hanteln und Bank, so wie sie bereitliegen sollen</span></button></div>';
+  }
+}
+function renderAll(){renderSummary();renderSets();renderRest();renderPrep();$('in-title').value=state.title||''}
+$('in-title').addEventListener('input',e=>{state.title=e.target.value;save()});
+$('in-title').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
+
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const LIMITS={rounds:[1,50],work:[5,900],rest:[0,900],roundRest:[0,1800]};
+function setNum(k,v){v=parseInt(v,10);if(isNaN(v))v=state[k];state[k]=clamp(v,LIMITS[k][0],LIMITS[k][1]);save();renderSummary()}
+document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setNum(b.dataset.step,state[b.dataset.step]+parseInt(b.dataset.d,10))));
+const PICK_KEYS=['jj','squat','pushup','plank','lunge','climber'];
+function setCount(v){
+  v=parseInt(v,10);if(isNaN(v))v=state.sets.length;v=clamp(v,1,30);
+  if(!Array.isArray(state.spare))state.spare=[];
+  while(state.sets.length>v)state.spare.push(state.sets.pop());
+  while(state.sets.length<v)state.sets.push(state.spare.length?state.spare.pop():{id:uid(),name:'',img:'builtin:'+PICK_KEYS[state.sets.length%PICK_KEYS.length]});
+  save();renderSets();renderSummary();
+}
+document.querySelectorAll('[data-count]').forEach(b=>b.addEventListener('click',()=>setCount(state.sets.length+parseInt(b.dataset.count,10))));
+$('in-sets').addEventListener('change',e=>setCount(e.target.value));
+[['in-rounds','rounds'],['in-work','work'],['in-rest','rest'],['in-rrest','roundRest']].forEach(([id,k])=>$(id).addEventListener('change',e=>setNum(k,e.target.value)));
+[['in-beep','beep'],['in-speak','speak'],['in-vib','vib'],['in-nextpic','nextPic']].forEach(([id,k])=>$(id).addEventListener('change',e=>{state.prefs[k]=e.target.checked;save()}));
+
+let pickTarget=null;
+const delArm={};
+function onListClick(e){
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=b.dataset.id,act=b.dataset.act;
+  if(act==='img'){pickTarget=id;$('file').value='';$('file').click();return}
+  const i=state.sets.findIndex(s=>s.id===id);if(i<0)return;
+  if(act==='up'&&i>0){[state.sets[i-1],state.sets[i]]=[state.sets[i],state.sets[i-1]]}
+  else if(act==='down'&&i<state.sets.length-1){[state.sets[i+1],state.sets[i]]=[state.sets[i],state.sets[i+1]]}
+  else if(act==='del'){
+    if(!delArm[id]){delArm[id]=setTimeout(()=>{delArm[id]=0;b.textContent='Entfernen';b.classList.remove('confirm')},3000);b.textContent='Sicher?';b.classList.add('confirm');return}
+    clearTimeout(delArm[id]);delArm[id]=0;state.sets.splice(i,1);
+  } else return;
+  save();renderSets();renderSummary();
+}
+$('sets').addEventListener('click',onListClick);
+$('rest-row').addEventListener('click',onListClick);
+$('sets').addEventListener('input',e=>{if(e.target.classList.contains('set-name')){const s=state.sets.find(x=>x.id===e.target.dataset.id);if(s){s.name=e.target.value;save()}}});
+function onSelect(e){
+  if(!e.target.classList.contains('pic-select'))return;
+  const v=e.target.value;if(v==='custom')return;
+  if(e.target.dataset.id==='rest'){state.restImg='builtin:'+v;renderRest()}
+  else{const s=state.sets.find(x=>x.id===e.target.dataset.id);if(s){s.img='builtin:'+v;renderSets()}}
+  save();
+}
+$('sets').addEventListener('change',onSelect);
+$('rest-row').addEventListener('change',onSelect);
+$('add-set').addEventListener('click',()=>{
+  if(state.sets.length>=30){toast('Maximal 30 Sets pro Durchlauf.');return}
+  setCount(state.sets.length+1);
+  const last=state.sets[state.sets.length-1];const inp=$('name-'+last.id);if(inp)inp.focus();
+});
+
+async function fileToSrc(file,max){
+  max=max||640;
+  if(file.type==='image/gif'&&file.size<1500000){
+    return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});
+  }
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+    const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*sc));c.height=Math.max(1,Math.round(img.naturalHeight*sc));
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.82);
+  }finally{URL.revokeObjectURL(url)}
+}
+$('file').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f||!pickTarget)return;
+  try{
+    const src=await fileToSrc(f,pickTarget==='prep'?1200:640);
+    if(pickTarget==='prep'){state.prepImg=src;renderPrep()}
+    else if(pickTarget==='rest'){state.restImg=src;renderRest()}
+    else{const s=state.sets.find(x=>x.id===pickTarget);if(s){s.img=src;renderSets()}}
+    save();
+  }catch(err){toast('Das Bild konnte nicht gelesen werden. Versuche ein JPG oder PNG.')}
+});
+
+/* ---------- Gerätevorbereitung ---------- */
+let prepDelArm=0;
+$('prep-box').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  if(b.dataset.act==='prep-pick'){pickTarget='prep';$('file').value='';$('file').click();return}
+  if(b.dataset.act==='prep-del'){
+    if(!prepDelArm){b.textContent='Sicher?';b.classList.add('confirm');prepDelArm=setTimeout(()=>{prepDelArm=0;b.textContent='Bild entfernen';b.classList.remove('confirm')},3000);return}
+    clearTimeout(prepDelArm);prepDelArm=0;state.prepImg='';save();renderPrep();
+  }
+});
+
+/* ---------- Import / Export ---------- */
+function fileName(){
+  const t=(state.title||'').trim()||'Mein Workout';
+  let s=t.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  if(!s)s='workout';
+  return s+'-'+new Date().toISOString().slice(0,10)+'.json';
+}
+function exportText(){
+  return JSON.stringify({app:'mein-workout',version:1,exported:new Date().toISOString(),workout:{
+    title:state.title||'',rounds:state.rounds,work:state.work,rest:state.rest,roundRest:state.roundRest,prep:state.prep||'',prepImg:state.prepImg||'',restImg:state.restImg,
+    sets:state.sets.map(s=>({name:s.name||'',img:s.img}))}},null,1);
+}
+let dl=null;
+try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{dl=d}).catch(()=>{})}catch(e){}
+$('exp-file').addEventListener('click',async()=>{
+  if(!dl){
+    const name=fileName();
+    try{
+      const url=URL.createObjectURL(new Blob([exportText()],{type:'application/json'}));
+      const a=document.createElement('a');a.href=url;a.download=name;a.hidden=true;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),15000);
+      toast('Download gestartet. Falls keine Datei erscheint, nutze „Als Text kopieren“.');
+    }catch(e){toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
+    return;
+  }
+  try{await dl.save({filename:fileName(),data:exportText()});toast('Workout als Datei gespeichert.')}
+  catch(e){if(e&&e.code==='declined')return;if(e&&e.code==='rate_limited'){toast('Bitte einen Moment warten und nochmal tippen.');return}toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
+});
+$('exp-copy').addEventListener('click',()=>{
+  const txt=exportText();
+  const fallback=()=>{const p=$('paste');p.open=true;const t=$('imp-text');t.value=txt;t.focus();t.select();toast('Text ist markiert. Kopiere ihn über das Menü deines Handys.')};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Workout als Text kopiert. Du kannst ihn jetzt z. B. in eine Nachricht einfügen.'),fallback)}catch(e){fallback()}
+});
+function okImg(v){return typeof v==='string'&&((/^builtin:[a-z]+$/.test(v)&&!!PICTOS[v.slice(8)])||/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+$/.test(v))}
+function parseWorkout(text){
+  const d=JSON.parse(text);
+  const w=d&&d.workout?d.workout:d;
+  if(!w||!Array.isArray(w.sets)||!w.sets.length)throw new Error('nosets');
+  const num=(v,k,def)=>{v=parseInt(v,10);return isNaN(v)?def:clamp(v,LIMITS[k][0],LIMITS[k][1])};
+  return {title:typeof w.title==='string'?w.title.slice(0,40):'',rounds:num(w.rounds,'rounds',3),work:num(w.work,'work',40),rest:num(w.rest,'rest',20),roundRest:num(w.roundRest,'roundRest',num(w.rest,'rest',20)),
+    prep:typeof w.prep==='string'?w.prep.slice(0,5000):'',
+    prepImg:okImg(w.prepImg)&&w.prepImg.startsWith('data:')?w.prepImg:'',
+    restImg:okImg(w.restImg)?w.restImg:'builtin:rest',
+    sets:w.sets.slice(0,30).map((s,i)=>({id:uid(),name:s&&typeof s.name==='string'?s.name.slice(0,80):'',img:s&&okImg(s.img)?s.img:'builtin:'+PICK_KEYS[i%PICK_KEYS.length]}))};
+}
+let pending=null;
+function offerImport(text){
+  try{pending=parseWorkout(text)}catch(e){pending=null;$('imp-confirm').hidden=true;toast('Das ist kein gültiges Workout. Prüfe, ob der Text vollständig kopiert wurde.');return}
+  const p=pending;
+  $('imp-msg').textContent='Gefunden: '+(p.title?'„'+p.title+'“, ':'')+p.rounds+' Durchläufe × '+p.sets.length+' Sets, '+p.work+' s Set, '+p.rest+' s Pause, '+p.roundRest+' s Pause zwischen Durchläufen. Das ersetzt dein aktuelles Workout mit '+state.sets.length+' Sets.';
+  $('imp-confirm').hidden=false;$('imp-yes').focus();
+}
+$('imp-file-btn').addEventListener('click',()=>{$('imp-file').value='';$('imp-file').click()});
+$('imp-file').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>offerImport(String(r.result||''));r.onerror=()=>toast('Die Datei konnte nicht gelesen werden.');r.readAsText(f);
+});
+$('imp-go').addEventListener('click',()=>{const t=$('imp-text').value.trim();if(!t){toast('Bitte zuerst den Workout-Text einfügen.');return}offerImport(t)});
+$('imp-no').addEventListener('click',()=>{pending=null;$('imp-confirm').hidden=true});
+$('imp-yes').addEventListener('click',()=>{
+  if(!pending)return;
+  const p=pending;pending=null;
+  if(p.title)state.title=p.title;state.rounds=p.rounds;state.work=p.work;state.rest=p.rest;state.roundRest=p.roundRest;state.prep=p.prep;state.prepImg=p.prepImg;state.restImg=p.restImg;state.sets=p.sets;state.spare=[];
+  save();renderAll();
+  $('imp-confirm').hidden=true;$('imp-text').value='';$('paste').open=false;
+  toast('Workout importiert: '+p.rounds+' × '+p.sets.length+' Sets.');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+let resetArm=0;
+$('reset').addEventListener('click',e=>{
+  const b=e.currentTarget;
+  if(!resetArm){b.textContent='Wirklich? Eigene Sets und Bilder gehen verloren. Nochmal tippen.';b.classList.add('confirm');resetArm=setTimeout(()=>{resetArm=0;b.textContent='Beispiel-Workout wiederherstellen';b.classList.remove('confirm')},4000);return}
+  clearTimeout(resetArm);resetArm=0;b.textContent='Beispiel-Workout wiederherstellen';b.classList.remove('confirm');
+  const prefs=state.prefs;state=fresh();state.prefs=prefs;save();renderAll();toast('Beispiel-Workout wiederhergestellt.');
+});
+
+/* ---------- Ton, Sprache, Vibration, Bildschirm ---------- */
+let ac=null;
+function ensureAudio(){try{if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
+function beep(f,d,delay){if(!ac||!state.prefs.beep)return;try{const t=ac.currentTime+(delay||0);const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.4,t+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+0.03)}catch(e){}}
+let voiceDe=null,curUtt=null,sayT=0;
+function pickVoice(){try{const vs=window.speechSynthesis.getVoices()||[];voiceDe=vs.find(v=>/^de[-_]DE/i.test(v.lang)&&v.localService)||vs.find(v=>/^de[-_]DE/i.test(v.lang))||vs.find(v=>/^de/i.test(v.lang))||null}catch(e){}}
+try{if(window.speechSynthesis){pickVoice();window.speechSynthesis.addEventListener('voiceschanged',pickVoice)}}catch(e){}
+function say(text,force,hooks){
+  if(!state.prefs.speak&&!force)return;
+  hooks=hooks||{};
+  try{
+    const ss=window.speechSynthesis;if(!ss){hooks.onerror&&hooks.onerror('nicht unterstützt');return}
+    if(ss.speaking||ss.pending)ss.cancel();
+    clearTimeout(sayT);
+    const doSpeak=plain=>{
+      try{
+        if(!voiceDe)pickVoice();
+        ss.resume();
+        const u=new SpeechSynthesisUtterance(text);
+        if(!plain){u.lang='de-DE';if(voiceDe)u.voice=voiceDe}
+        u.rate=1.05;u.volume=1;
+        u.onstart=()=>hooks.onstart&&hooks.onstart();
+        u.onerror=e=>{
+          const err=e&&e.error||'unbekannt';
+          if(!plain&&(err==='network'||err==='synthesis-unavailable'||err==='language-unavailable'||err==='voice-unavailable')){setTimeout(()=>doSpeak(true),60);return}
+          hooks.onerror&&hooks.onerror(err+(plain?' (auch ohne Sprachwahl)':''));
+        };
+        curUtt=u;ss.speak(u);
+      }catch(e){hooks.onerror&&hooks.onerror(String(e&&e.message||e))}
+    };
+    sayT=setTimeout(()=>doSpeak(false),80);
+  }catch(e){hooks.onerror&&hooks.onerror(String(e&&e.message||e))}
+}
+function testSpeech(){
+  const st=$('tts-status');
+  if(!window.speechSynthesis){st.textContent='Dieser Browser bietet keine Sprachausgabe an.';return}
+  pickVoice();
+  let n=0;try{n=(window.speechSynthesis.getVoices()||[]).length}catch(e){}
+  const vname=voiceDe?voiceDe.name:'';
+  st.textContent='Teste …';
+  let answered=false;
+  say('Das ist ein Test der Ansage.',true,{
+    onstart:()=>{answered=true;st.textContent='Ansage läuft'+(vname?' (Stimme: '+vname+')':'')+'. Hörst du nichts, prüfe die Medienlautstärke.'},
+    onerror:err=>{answered=true;st.textContent='Fehler der Sprachausgabe: '+err+'. '+(n?n+' Stimmen gefunden':'Keine Stimmen gefunden')+(vname?'':', keine deutsche Stimme')+'.'}
+  });
+  setTimeout(()=>{if(!answered)st.textContent='Keine Reaktion der Sprachausgabe. '+(n?n+' Stimmen gefunden':'Keine Stimmen gefunden')+(vname?', deutsche Stimme: '+vname:', keine deutsche Stimme')+'. Prüfe die Sprachausgabe in den Android-Einstellungen.'},3000);
+}
+function buzz(p){if(!state.prefs.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+let wl=null;
+async function wake(){try{if('wakeLock' in navigator){wl=await navigator.wakeLock.request('screen')}}catch(e){wl=null}}
+function unwake(){try{wl&&wl.release()}catch(e){}wl=null}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&run&&!run.done)wake()});
+
+/* ---------- Lauf ---------- */
+let run=null;
+function buildPlan(){
+  const p=[],n=state.sets.length,x=state.rounds;
+  p.push({type:'ready',dur:5,nextSet:0,nextRound:0});
+  for(let r=0;r<x;r++)for(let i=0;i<n;i++){
+    p.push({type:'work',dur:state.work,set:i,round:r});
+    const last=(r===x-1&&i===n-1);
+    if(last)continue;
+    if(i===n-1){if(state.roundRest>0)p.push({type:'pause',dur:state.roundRest,nextSet:0,nextRound:r+1,roundBreak:true})}
+    else if(state.rest>0)p.push({type:'pause',dur:state.rest,nextSet:i+1,nextRound:r});
+  }
+  return p;
+}
+function startRun(){
+  if(!state.sets.length)return;
+  ensureAudio();
+  run={plan:buildPlan(),idx:0,start:performance.now(),paused:false,remain:0,lastSec:null,raf:0,done:false,sets:state.sets.slice(),total:totalSeconds()};
+  $('run').hidden=false;$('run-main').hidden=false;$('run-done').hidden=true;$('run-check').hidden=true;
+  document.body.style.overflow='hidden';
+  $('r-mute').setAttribute('aria-pressed',String(state.prefs.beep));
+  setPaused(false,true);
+  enterPhase();
+  wake();
+  run.raf=requestAnimationFrame(loop);
+}
+function remaining(now){const p=run.plan[run.idx];return run.paused?run.remain:p.dur-(now-run.start)/1000}
+function loop(){
+  if(!run||run.done)return;
+  const now=performance.now();
+  let rem=remaining(now);
+  while(!run.paused&&rem<=0){
+    run.start+=run.plan[run.idx].dur*1000;run.idx++;
+    if(run.idx>=run.plan.length){finish();return}
+    enterPhase();rem=remaining(now);
+  }
+  drawClock(rem);
+  run.raf=requestAnimationFrame(loop);
+}
+function nextHTML(setIdx,prefix){
+  const s=run.sets[setIdx];
+  return '<span class="mini">'+imgHTML(s.img,setName(s,setIdx))+'</span><span>'+prefix+' <b>'+esc(setName(s,setIdx))+'</b></span>';
+}
+function enterPhase(){
+  const p=run.plan[run.idx],n=run.sets.length,x=state.rounds,R=$('run');
+  R.dataset.phase=p.type;
+  run.lastSec=Math.ceil(p.dur);
+  $('r-bar').setAttribute('aria-valuemax',String(p.dur));
+  if(p.type==='work'){
+    const s=run.sets[p.set];
+    $('r-chip').textContent='Set';
+    $('r-pos').textContent='Runde '+(p.round+1)+'/'+x+' · Set '+(p.set+1)+'/'+n;
+    $('r-stage').innerHTML=imgHTML(s.img,setName(s,p.set));
+    $('r-name').textContent=setName(s,p.set);
+    const nx=run.plan[run.idx+1];
+    if(!nx)$('r-next').innerHTML='<span><b>Letztes Set!</b> Danach ist das Workout fertig.</span>';
+    else if(nx.type==='pause')$('r-next').innerHTML=nextHTML(nx.nextSet,'Danach '+nx.dur+' s '+(nx.roundBreak?'Pause vor Runde '+(nx.nextRound+1):'Pause')+', dann');
+    else $('r-next').innerHTML=nextHTML(nx.set,'Danach direkt');
+    beep(1175,0.5);buzz([220]);say(setName(s,p.set));
+  }else if(p.type==='pause'){
+    $('r-chip').textContent=p.roundBreak?'Rundenpause':'Pause';
+    $('r-pos').textContent=(p.nextSet===0?'Runde '+(p.nextRound+1)+'/'+x+' beginnt':'Runde '+(p.nextRound+1)+'/'+x)+' · als Nächstes Set '+(p.nextSet+1)+'/'+n;
+    if(p.roundBreak&&state.prepImg){
+      $('r-stage').innerHTML='<img src="'+esc(state.prepImg)+'" alt="Gerätevorbereitung"><span class="tag-next">Geräte prüfen</span>';
+    }else if(state.prefs.nextPic){
+      const ns=run.sets[p.nextSet];
+      $('r-stage').innerHTML=imgHTML(ns.img,setName(ns,p.nextSet))+'<span class="tag-next">Als Nächstes</span><span class="corner">'+imgHTML(state.restImg,'Pause')+'</span>';
+    }else $('r-stage').innerHTML=imgHTML(state.restImg,'Pause');
+    $('r-name').textContent=p.roundBreak?('Runde '+p.nextRound+' geschafft'):'Pause';
+    $('r-next').innerHTML=nextHTML(p.nextSet,'Als Nächstes:');
+    beep(587,0.5);buzz([120,80,120]);say(p.roundBreak?('Runde '+p.nextRound+' geschafft. Pause. Runde '+(p.nextRound+1)+' beginnt mit '+setName(run.sets[p.nextSet],p.nextSet)):('Pause. Als Nächstes '+setName(run.sets[p.nextSet],p.nextSet)));
+  }else{
+    $('r-chip').textContent='Bereit';
+    $('r-pos').textContent=x+' × '+n+' Sets · '+fmt(run.total)+' Min.';
+    $('r-stage').innerHTML=imgHTML(run.sets[0].img,setName(run.sets[0],0));
+    $('r-name').textContent='Gleich geht es los';
+    $('r-next').innerHTML=nextHTML(0,'Erstes Set:');
+    say('Gleich geht es los mit '+setName(run.sets[0],0));
+  }
+}
+function drawClock(rem){
+  const p=run.plan[run.idx];
+  const r=Math.max(0,rem),sec=Math.ceil(r);
+  if(sec!==run.lastSec){if(!run.paused&&sec>=1&&sec<=3)beep(880,0.13);run.lastSec=sec}
+  $('r-sec').textContent=sec;
+  $('r-fill').style.transform='scaleX('+(p.dur?r/p.dur:0)+')';
+  $('r-bar').setAttribute('aria-valuenow',String(sec));
+  let left=p.type==='ready'?0:r;
+  for(let j=run.idx+1;j<run.plan.length;j++)left+=run.plan[j].dur;
+  $('r-left').textContent='Noch '+fmt(left);
+  const t=run.total?1-left/run.total:1;
+  $('r-total').style.transform='scaleX('+clamp(t,0,1)+')';
+}
+function setPaused(v,quiet){
+  const now=performance.now();
+  if(v&&!run.paused){run.remain=remaining(now);run.paused=true}
+  else if(!v&&run.paused){run.start=now-(run.plan[run.idx].dur-run.remain)*1000;run.paused=false}
+  $('run').classList.toggle('paused',run.paused);
+  $('r-toggle').textContent=run.paused?'Fortsetzen':'Anhalten';
+  if(!quiet&&run.paused){try{window.speechSynthesis&&window.speechSynthesis.cancel()}catch(e){}}
+}
+function skip(){
+  if(!run||run.done)return;
+  run.idx++;
+  if(run.idx>=run.plan.length){finish();return}
+  run.start=performance.now();
+  if(run.paused)run.remain=run.plan[run.idx].dur;
+  enterPhase();drawClock(remaining(performance.now()));
+}
+function finish(){
+  run.done=true;cancelAnimationFrame(run.raf);unwake();
+  const n=run.sets.length;
+  $('done-text').textContent=state.rounds+' Durchläufe · '+(state.rounds*n)+' Sets · '+fmt(run.total)+' Minuten Training.';
+  $('run-main').hidden=true;$('run-done').hidden=false;$('run').dataset.phase='pause';
+  beep(988,0.18);beep(1319,0.18,0.2);beep(1760,0.5,0.4);buzz([200,100,200,100,400]);say('Geschafft. Gut gemacht!');
+}
+function closeRun(){
+  if(run){run.done=true;cancelAnimationFrame(run.raf)}
+  run=null;unwake();
+  try{window.speechSynthesis&&window.speechSynthesis.cancel()}catch(e){}
+  $('run').hidden=true;document.body.style.overflow='';
+  resetStop();
+}
+let stopArm=0;
+function resetStop(){clearTimeout(stopArm);stopArm=0;$('r-stop').textContent='Beenden';$('r-stop').classList.remove('confirm')}
+$('r-stop').addEventListener('click',()=>{
+  if(!stopArm){$('r-stop').textContent='Sicher?';$('r-stop').classList.add('confirm');stopArm=setTimeout(resetStop,3000);return}
+  closeRun();
+});
+$('r-toggle').addEventListener('click',()=>{if(run&&!run.done){ensureAudio();setPaused(!run.paused)}});
+$('r-skip').addEventListener('click',skip);
+$('r-mute').addEventListener('click',()=>{state.prefs.beep=!state.prefs.beep;$('r-mute').setAttribute('aria-pressed',String(state.prefs.beep));$('in-beep').checked=state.prefs.beep;save()});
+function showCheck(){
+  ensureAudio();
+  $('chk-img').innerHTML='<img src="'+esc(state.prepImg)+'" alt="Gerätevorbereitung">';
+  $('run').dataset.phase='ready';
+  $('run').hidden=false;$('run-main').hidden=true;$('run-done').hidden=true;$('run-check').hidden=false;
+  document.body.style.overflow='hidden';
+  say('Bitte prüfe, ob alle Geräte bereitliegen.');
+  $('chk-ok').focus();
+}
+$('tts-test').addEventListener('click',testSpeech);
+$('btn-start').addEventListener('click',()=>{if(!state.sets.length)return;if(state.prepImg)showCheck();else startRun()});
+$('chk-ok').addEventListener('click',startRun);
+$('chk-back').addEventListener('click',()=>{$('run-check').hidden=true;closeRun()});
+$('d-again').addEventListener('click',()=>{closeRun();startRun()});
+$('d-back').addEventListener('click',closeRun);
+
+renderAll();
+})();
+</script>
+
+</body>
+</html>

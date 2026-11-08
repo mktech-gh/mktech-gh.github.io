@@ -1,2 +1,4 @@
 # mktech-gh.github.io
-Repository für Web-Appliationen (öffentlich) zugänglich
+Repository für Web-Applikationen, öffentlich zugänglich unter https://mktech-gh.github.io/
+
+Regeln und Ablauf: siehe CLAUDE.md
