@@ -34,6 +34,7 @@ Claude-Artifacts sind nicht mehr Master und werden für diese Apps nicht mehr ve
 - Sprache der Oberfläche: Deutsch in Schweizer Schreibweise (ss statt ß).
 - Texte ohne Gedankenstriche formulieren (Wunsch von Markus).
 - Bestätigungen (Löschen, Ersetzen) in der Seite selbst lösen, nicht mit `confirm()`.
+- Jede App zeigt ganz unten `Version JJJJ-MM-TT` (Element `#app-version`, lokales Datum der letzten Änderung). Bei jeder Änderung an der App nachführen, damit Markus sieht, ob die neue Version geladen ist.
 
 ## Sicherung und Wiederherstellung (Standard)
 
