@@ -73,12 +73,17 @@ main{max-width:560px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-lef
     <p class="hint">Die Sicherung enthält alle Einstellungen dieser App. Die Datei kannst du aufbewahren, per Mail oder Messenger weitergeben und auf einem anderen Gerät importieren.</p>
   </section>
   <input type="file" id="bk-input" accept=".json,application/json,text/plain" hidden>
-  <div class="toast" id="toast" hidden></div>
   <!-- ===== /SICHERUNG ===== -->
+  <div class="toast" id="toast" hidden></div>
 </main>
 
 <script>
 (function(){
+/* Grundfunktionen, die jede App hat: $(id) und toast(text) mit <div class="toast" id="toast" hidden></div> */
+const $=id=>document.getElementById(id);
+let toastT=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+
 /* ===== APP-SPEZIFISCH: nur diesen Block pro App anpassen ===== */
 const APP_ID='vorlage';          // = Ordnername der App
 const FORMAT_VERSION=1;          // erhöhen, wenn sich das Datenformat ändert; migrate() nachführen
@@ -101,10 +106,7 @@ const backup={
 };
 /* ===== /APP-SPEZIFISCH ===== */
 
-/* ===== SICHERUNG: JS (unverändert übernehmen) ===== */
-const $=id=>document.getElementById(id);
-let toastT=0;
-function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+/* ===== SICHERUNG: JS (unverändert übernehmen; setzt $(id) und toast(text) voraus) ===== */
 function bkSlug(t){
   let s=String(t||'').trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
     .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');

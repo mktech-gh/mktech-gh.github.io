@@ -28,7 +28,7 @@ Claude-Artifacts sind nicht mehr Master und werden für diese Apps nicht mehr ve
 - **Öffentliches Repository: keine Geheimnisse.** Keine Passwörter, Tokens, API-Schlüssel, internen IP-Adressen oder Hausdaten im Code. Zugangsdaten gibt der Nutzer in der App ein, sie bleiben nur im Browser (localStorage).
 - Jede App ist eine eigenständige Datei: CSS und JavaScript inline. Extern nur Google Fonts oder Bibliotheken von cdnjs/jsDelivr mit fester Versionsnummer.
 - **Alle Apps teilen sich eine Origin** (`mktech-gh.github.io`) und damit denselben localStorage. Jede App verwendet einen eigenen Schlüssel mit App-Präfix, z. B. `<app-name>.v1`.
-- Speicherschlüssel nie umbenennen. Ändert sich das Datenformat, alte Daten beim Laden weiterhin lesen und umwandeln.
+- Speicherschlüssel nicht umbenennen. Falls doch nötig, beim Laden den alten Schlüssel lesen und übernehmen, damit nichts verloren geht. Ändert sich das Datenformat, alte Daten beim Laden weiterhin lesen und umwandeln.
 - Jede App, die Einstellungen oder Daten speichert, hat den **Standard-Mechanismus zur Sicherung und Wiederherstellung** (siehe unten).
 - Zielgerät: Android-Handy, Standardbrowser Edge (Chrome geht auch), als „Zum Startbildschirm hinzufügen“ genutzt. Mobile first, helles und dunkles Farbschema. Sprachausgabe funktioniert auf GitHub Pages in Edge und Chrome.
 - Sprache der Oberfläche: Deutsch in Schweizer Schreibweise (ss statt ß).
@@ -59,10 +59,10 @@ Format der Sicherung (JSON):
 
 Dateiname: `<titel-als-slug>-JJJJ-MM-TT.json`, mit lokalem Datum. Umlaute werden ersetzt (ä→ae, ö→oe, ü→ue, ß→ss), alles andere ausser a–z und 0–9 wird zu Bindestrichen. Ohne Titel der App-Name.
 
-Ausnahme: `workout/` ist älter als dieser Standard. Seine Sicherungen haben `"app": "mein-workout"` und `"workout"` statt `"data"`. Dieses Format bleibt, damit bestehende Sicherungen lesbar bleiben.
+Die Vorlage setzt die Grundfunktionen `$(id)` und `toast(text)` sowie `<div class="toast" id="toast" hidden></div>` voraus. Hat die App sie schon, nicht doppelt definieren.
 
 ## Apps
 
 | Ordner | Titel | Zweck | Speicherschlüssel |
 |---|---|---|---|
-| `workout/` | Mein Workout | Intervall-Training mit Durchläufen, Sets, Pausen, Bildern, Sprachansage, Import/Export | `mein-workout.v1` (älterer Name ohne Präfix, nicht ändern) |
+| `workout/` | Mein Workout | Intervall-Training mit Durchläufen, Sets, Pausen, Bildern, Sprachansage, Sicherung | `workout.v1` (übernimmt beim ersten Start einmalig den alten Schlüssel `mein-workout.v1`) |

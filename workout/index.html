@@ -261,28 +261,31 @@ button{cursor:pointer}
     </div>
   </section>
 
-  <section class="sec">
-    <h2>Sicherung</h2>
+  <!-- ===== SICHERUNG: HTML ===== -->
+  <section class="sec" aria-labelledby="bk-title">
+    <h2 id="bk-title">Sicherung</h2>
     <div class="panel">
       <div class="io">
-        <button type="button" id="exp-file">Als .json-Datei speichern</button>
-        <button type="button" id="exp-copy">Als Text kopieren</button>
-        <button type="button" id="imp-file-btn">Datei importieren</button>
+        <button type="button" id="bk-file">Als .json-Datei speichern</button>
+        <button type="button" id="bk-copy">Als Text kopieren</button>
+        <button type="button" id="bk-open">Datei importieren</button>
       </div>
-      <details class="paste" id="paste">
+      <details class="paste" id="bk-paste">
         <summary>Text einfügen und importieren</summary>
         <div class="paste-body">
-          <textarea id="imp-text" placeholder="Exportierten Workout-Text hier einfügen" aria-label="Workout-Text"></textarea>
-          <button type="button" id="imp-go">Text importieren</button>
+          <textarea id="bk-text" placeholder="Gesicherten Text hier einfügen" aria-label="Gesicherter Text"></textarea>
+          <button type="button" id="bk-go">Text importieren</button>
         </div>
       </details>
-      <div class="imp-confirm" id="imp-confirm" hidden>
-        <p id="imp-msg"></p>
-        <div class="btns"><button type="button" class="yes" id="imp-yes">Ersetzen</button><button type="button" id="imp-no">Abbrechen</button></div>
+      <div class="imp-confirm" id="bk-confirm" hidden>
+        <p id="bk-msg"></p>
+        <div class="btns"><button type="button" class="yes" id="bk-yes">Ersetzen</button><button type="button" id="bk-no">Abbrechen</button></div>
       </div>
     </div>
-    <p class="hint">Der Export enthält Ablauf, das Bild der Gerätevorbereitung, alle Sets und eigene Bilder. Die Datei kannst du z. B. per Mail oder Messenger weitergeben und auf einem anderen Gerät importieren.</p>
+    <p class="hint">Die Sicherung enthält dein ganzes Workout: Ablauf, Sets, alle Bilder und die Signal-Einstellungen. Die Datei kannst du aufbewahren, per Mail oder Messenger weitergeben und auf einem anderen Gerät importieren.</p>
   </section>
+  <input type="file" id="bk-input" accept=".json,application/json,text/plain" hidden>
+  <!-- ===== /SICHERUNG ===== -->
 
   <div class="foot">
     <button type="button" class="link-btn" id="reset">Beispiel-Workout wiederherstellen</button>
@@ -290,7 +293,6 @@ button{cursor:pointer}
 </div>
 
 <input type="file" id="file" accept="image/*" hidden>
-<input type="file" id="imp-file" accept=".json,application/json,text/plain" hidden>
 
 <section class="run" id="run" hidden data-phase="ready" aria-live="polite">
   <div class="run-inner" id="run-main">
@@ -340,7 +342,8 @@ button{cursor:pointer}
 
 <script>
 (function(){
-const KEY='mein-workout.v1';
+const KEY='workout.v1';
+const OLD_KEY='mein-workout.v1'; // bis 9.11.2026 verwendet, wird beim ersten Start übernommen
 const PICTOS={
   jj:{label:'Hampelmann',svg:'<circle cx="100" cy="36" r="14"/><path d="M100 54 L100 110 M100 66 L62 30 M100 66 L138 30 M100 110 L68 170 M100 110 L132 170"/>'},
   squat:{label:'Kniebeuge',svg:'<circle cx="114" cy="54" r="14"/><path d="M108 70 L92 118 L136 122 L130 170 L150 170 M104 82 L158 86"/>'},
@@ -360,7 +363,7 @@ const DEFAULT={title:'Mein Workout',rounds:3,work:40,rest:20,roundRest:60,prepIm
   ]};
 function fresh(){const d=JSON.parse(JSON.stringify(DEFAULT));d.sets.forEach(s=>s.id=uid());return d}
 function load(){
-  try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.sets)){const f=fresh();const m=Object.assign(f,d);m.prefs=Object.assign({},DEFAULT.prefs,d.prefs||{});m.sets.forEach(s=>{if(!s.id)s.id=uid()});return m}}}catch(e){}
+  try{let raw=localStorage.getItem(KEY);if(!raw){raw=localStorage.getItem(OLD_KEY);if(raw)localStorage.setItem(KEY,raw)}if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.sets)){const f=fresh();const m=Object.assign(f,d);m.prefs=Object.assign({},DEFAULT.prefs,d.prefs||{});m.sets.forEach(s=>{if(!s.id)s.id=uid()});return m}}}catch(e){}
   return fresh();
 }
 let state=load();
@@ -524,74 +527,82 @@ $('prep-box').addEventListener('click',e=>{
   }
 });
 
-/* ---------- Import / Export ---------- */
-function fileName(){
-  const t=(state.title||'').trim()||'Mein Workout';
-  let s=t.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  if(!s)s='workout';
-  return s+'-'+(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date())+'.json';
-}
-function exportText(){
-  return JSON.stringify({app:'mein-workout',version:1,exported:new Date().toISOString(),workout:{
-    title:state.title||'',rounds:state.rounds,work:state.work,rest:state.rest,roundRest:state.roundRest,prep:state.prep||'',prepImg:state.prepImg||'',restImg:state.restImg,
-    sets:state.sets.map(s=>({name:s.name||'',img:s.img}))}},null,1);
-}
-let dl=null;
-try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{dl=d}).catch(()=>{})}catch(e){}
-$('exp-file').addEventListener('click',async()=>{
-  if(!dl){
-    const name=fileName();
-    try{
-      const url=URL.createObjectURL(new Blob([exportText()],{type:'application/json'}));
-      const a=document.createElement('a');a.href=url;a.download=name;a.hidden=true;document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),15000);
-      toast('Download gestartet. Falls keine Datei erscheint, nutze „Als Text kopieren“.');
-    }catch(e){toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
-    return;
-  }
-  try{await dl.save({filename:fileName(),data:exportText()});toast('Workout als Datei gespeichert.')}
-  catch(e){if(e&&e.code==='declined')return;if(e&&e.code==='rate_limited'){toast('Bitte einen Moment warten und nochmal tippen.');return}toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
-});
-$('exp-copy').addEventListener('click',()=>{
-  const txt=exportText();
-  const fallback=()=>{const p=$('paste');p.open=true;const t=$('imp-text');t.value=txt;t.focus();t.select();toast('Text ist markiert. Kopiere ihn über das Menü deines Handys.')};
-  try{navigator.clipboard.writeText(txt).then(()=>toast('Workout als Text kopiert. Du kannst ihn jetzt z. B. in eine Nachricht einfügen.'),fallback)}catch(e){fallback()}
-});
+/* ---------- Sicherung (Standard, siehe vorlagen/sicherung.html) ---------- */
+const APP_ID='workout';
+const FORMAT_VERSION=1;
 function okImg(v){return typeof v==='string'&&((/^builtin:[a-z]+$/.test(v)&&!!PICTOS[v.slice(8)])||/^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+$/.test(v))}
-function parseWorkout(text){
-  const d=JSON.parse(text);
-  const w=d&&d.workout?d.workout:d;
-  if(!w||!Array.isArray(w.sets)||!w.sets.length)throw new Error('nosets');
-  const num=(v,k,def)=>{v=parseInt(v,10);return isNaN(v)?def:clamp(v,LIMITS[k][0],LIMITS[k][1])};
-  return {title:typeof w.title==='string'?w.title.slice(0,40):'',rounds:num(w.rounds,'rounds',3),work:num(w.work,'work',40),rest:num(w.rest,'rest',20),roundRest:num(w.roundRest,'roundRest',num(w.rest,'rest',20)),
-    prep:typeof w.prep==='string'?w.prep.slice(0,5000):'',
-    prepImg:okImg(w.prepImg)&&w.prepImg.startsWith('data:')?w.prepImg:'',
-    restImg:okImg(w.restImg)?w.restImg:'builtin:rest',
-    sets:w.sets.slice(0,30).map((s,i)=>({id:uid(),name:s&&typeof s.name==='string'?s.name.slice(0,80):'',img:s&&okImg(s.img)?s.img:'builtin:'+PICK_KEYS[i%PICK_KEYS.length]}))};
+const backup={
+  title:()=>(state.title||'').trim()||'Mein Workout',
+  data:()=>({title:state.title||'',rounds:state.rounds,work:state.work,rest:state.rest,roundRest:state.roundRest,
+    prepImg:state.prepImg||'',restImg:state.restImg,prefs:state.prefs,
+    sets:state.sets.map(s=>({name:s.name||'',img:s.img}))}),
+  migrate:(data,version)=>data,
+  validate:w=>{
+    if(!w||!Array.isArray(w.sets)||!w.sets.length)throw new Error('Diese Sicherung enthält keine Sets.');
+    const num=(v,k,def)=>{v=parseInt(v,10);return isNaN(v)?def:clamp(v,LIMITS[k][0],LIMITS[k][1])};
+    const pr=w.prefs&&typeof w.prefs==='object'?w.prefs:{};
+    const prefs={};for(const k in DEFAULT.prefs)prefs[k]=typeof pr[k]==='boolean'?pr[k]:DEFAULT.prefs[k];
+    return {title:typeof w.title==='string'?w.title.slice(0,40):'',rounds:num(w.rounds,'rounds',3),work:num(w.work,'work',40),rest:num(w.rest,'rest',20),roundRest:num(w.roundRest,'roundRest',60),
+      prepImg:okImg(w.prepImg)&&w.prepImg.startsWith('data:')?w.prepImg:'',
+      restImg:okImg(w.restImg)?w.restImg:'builtin:rest',prefs,
+      sets:w.sets.slice(0,30).map((s,i)=>({id:uid(),name:s&&typeof s.name==='string'?s.name.slice(0,80):'',img:s&&okImg(s.img)?s.img:'builtin:'+PICK_KEYS[i%PICK_KEYS.length]}))};
+  },
+  summary:p=>(p.title?'„'+p.title+'“, ':'')+p.rounds+' Durchläufe × '+p.sets.length+' Sets, '+p.work+' s Set, '+p.rest+' s Pause, '+p.roundRest+' s Pause zwischen Durchläufen.',
+  apply:p=>{
+    state.title=p.title;state.rounds=p.rounds;state.work=p.work;state.rest=p.rest;state.roundRest=p.roundRest;state.prepImg=p.prepImg;state.restImg=p.restImg;state.prefs=p.prefs;state.sets=p.sets;state.spare=[];
+    save();renderAll();window.scrollTo({top:0,behavior:'smooth'});
+  }
+};
+/* ===== SICHERUNG: JS (unverändert übernehmen; setzt $(id) und toast(text) voraus) ===== */
+function bkSlug(t){
+  let s=String(t||'').trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return s||APP_ID;
 }
-let pending=null;
-function offerImport(text){
-  try{pending=parseWorkout(text)}catch(e){pending=null;$('imp-confirm').hidden=true;toast('Das ist kein gültiges Workout. Prüfe, ob der Text vollständig kopiert wurde.');return}
-  const p=pending;
-  $('imp-msg').textContent='Gefunden: '+(p.title?'„'+p.title+'“, ':'')+p.rounds+' Durchläufe × '+p.sets.length+' Sets, '+p.work+' s Set, '+p.rest+' s Pause, '+p.roundRest+' s Pause zwischen Durchläufen. Das ersetzt dein aktuelles Workout mit '+state.sets.length+' Sets.';
-  $('imp-confirm').hidden=false;$('imp-yes').focus();
+function bkDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function bkFileName(){return bkSlug(backup.title())+'-'+bkDate()+'.json'}
+function bkText(){return JSON.stringify({app:APP_ID,version:FORMAT_VERSION,exported:new Date().toISOString(),title:backup.title(),data:backup.data()},null,1)}
+function bkParse(text){
+  let o;try{o=JSON.parse(text)}catch(e){throw new Error('Das ist kein gültiger Sicherungstext. Prüfe, ob er vollständig kopiert wurde.')}
+  if(!o||typeof o!=='object'||!('data' in o))throw new Error('Das ist keine Sicherung dieser App.');
+  if(o.app!==APP_ID)throw new Error('Diese Sicherung gehört zu einer anderen App ('+String(o.app||'unbekannt')+').');
+  const v=parseInt(o.version,10)||1;
+  if(v>FORMAT_VERSION)throw new Error('Diese Sicherung stammt aus einer neueren Version der App. Lade die App neu und versuche es nochmals.');
+  return backup.validate(backup.migrate(o.data,v));
 }
-$('imp-file-btn').addEventListener('click',()=>{$('imp-file').value='';$('imp-file').click()});
-$('imp-file').addEventListener('change',e=>{
+let bkPending=null;
+function bkOffer(text){
+  try{bkPending=bkParse(text)}catch(e){bkPending=null;$('bk-confirm').hidden=true;toast(e.message);return}
+  $('bk-msg').textContent='Gefunden: '+backup.summary(bkPending)+' Das ersetzt die aktuellen Einstellungen.';
+  $('bk-confirm').hidden=false;$('bk-yes').focus();
+}
+$('bk-file').addEventListener('click',()=>{
+  try{
+    const url=URL.createObjectURL(new Blob([bkText()],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=bkFileName();a.hidden=true;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),15000);
+    toast('Sicherung als Datei gespeichert ('+bkFileName()+').');
+  }catch(e){toast('Speichern als Datei klappt hier nicht. Nutze „Als Text kopieren“.')}
+});
+$('bk-copy').addEventListener('click',()=>{
+  const txt=bkText();
+  const fallback=()=>{$('bk-paste').open=true;const t=$('bk-text');t.value=txt;t.focus();t.select();toast('Text ist markiert. Kopiere ihn über das Menü deines Handys.')};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Sicherung als Text kopiert.'),fallback)}catch(e){fallback()}
+});
+$('bk-open').addEventListener('click',()=>{$('bk-input').value='';$('bk-input').click()});
+$('bk-input').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
-  const r=new FileReader();r.onload=()=>offerImport(String(r.result||''));r.onerror=()=>toast('Die Datei konnte nicht gelesen werden.');r.readAsText(f);
+  const r=new FileReader();r.onload=()=>bkOffer(String(r.result||''));r.onerror=()=>toast('Die Datei konnte nicht gelesen werden.');r.readAsText(f);
 });
-$('imp-go').addEventListener('click',()=>{const t=$('imp-text').value.trim();if(!t){toast('Bitte zuerst den Workout-Text einfügen.');return}offerImport(t)});
-$('imp-no').addEventListener('click',()=>{pending=null;$('imp-confirm').hidden=true});
-$('imp-yes').addEventListener('click',()=>{
-  if(!pending)return;
-  const p=pending;pending=null;
-  if(p.title)state.title=p.title;state.rounds=p.rounds;state.work=p.work;state.rest=p.rest;state.roundRest=p.roundRest;state.prep=p.prep;state.prepImg=p.prepImg;state.restImg=p.restImg;state.sets=p.sets;state.spare=[];
-  save();renderAll();
-  $('imp-confirm').hidden=true;$('imp-text').value='';$('paste').open=false;
-  toast('Workout importiert: '+p.rounds+' × '+p.sets.length+' Sets.');
-  window.scrollTo({top:0,behavior:'smooth'});
+$('bk-go').addEventListener('click',()=>{const t=$('bk-text').value.trim();if(!t){toast('Bitte zuerst den gesicherten Text einfügen.');return}bkOffer(t)});
+$('bk-no').addEventListener('click',()=>{bkPending=null;$('bk-confirm').hidden=true});
+$('bk-yes').addEventListener('click',()=>{
+  if(!bkPending)return;
+  const d=bkPending;bkPending=null;backup.apply(d);
+  $('bk-confirm').hidden=true;$('bk-text').value='';$('bk-paste').open=false;
+  toast('Sicherung wiederhergestellt.');
 });
+/* ===== /SICHERUNG ===== */
 
 let resetArm=0;
 $('reset').addEventListener('click',e=>{
